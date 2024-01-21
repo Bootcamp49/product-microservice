@@ -80,4 +80,15 @@ public class ProductPasiveController {
         return service.deleteProduct(id);
     }
 
+    @PostMapping("/debit/{id}")
+    public Mono<ProductPasive> debitMovement(@PathVariable String id, @RequestBody ProductPasive product) {
+        return service.debitMovement(id, product);
+    }
+
+    @PostMapping("/deposit/{id}")
+    public Mono<ProductPasive> depositMovement(@PathVariable String id, @RequestBody ProductPasive product) {
+        return service.depositMovement(id, product);
+    }
+    
+
 }

@@ -52,5 +52,23 @@ public class ProductActiveServiceImpl implements ProductActiveService{
     public Mono<Void> deleteProduct(String id) {
         return activeRepository.deleteById(id);
     }
+
+    @Override
+    public Mono<ProductActive> debitMovement(String id, ProductActive productActive) {
+        return activeRepository.findById(id)
+        .flatMap(existingProduct -> {
+            existingProduct.setCurrentCredit(existingProduct.getCurrentCredit() - productActive.getCurrentCredit());
+            return activeRepository.save(existingProduct);
+        });
+    }
+
+    @Override
+    public Mono<ProductActive> depositMovement(String id, ProductActive productActive) {
+        return activeRepository.findById(id)
+        .flatMap(existingProduct -> {
+            existingProduct.setCurrentCredit(existingProduct.getCurrentCredit() + productActive.getCurrentCredit());
+            return activeRepository.save(existingProduct);
+        });
+    }
     
 }

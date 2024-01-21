@@ -80,4 +80,13 @@ public class ProductActiveController {
     public Mono<Void> deleteProduct(@PathVariable String id){
         return service.deleteProduct(id);
     }
+
+    @PostMapping("/debit/{id}")
+    public Mono<ProductActive> debitMovement(@PathVariable String id, @RequestBody ProductActive product){
+        return service.debitMovement(id, product);
+    }
+    @PostMapping
+    public Mono<ProductActive> depositMovement(@PathVariable String id, @RequestBody ProductActive product){
+        return service.depositMovement(id, product);
+    }
 }
