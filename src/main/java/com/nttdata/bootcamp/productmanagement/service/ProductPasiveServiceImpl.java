@@ -1,9 +1,14 @@
 package com.nttdata.bootcamp.productmanagement.service;
 
+import java.time.LocalDate;
+import java.util.Date;
+import java.util.function.Predicate;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.nttdata.bootcamp.productmanagement.model.ProductPasive;
+import com.nttdata.bootcamp.productmanagement.model.ProductPasiveType;
 import com.nttdata.bootcamp.productmanagement.repository.ProductPasiveRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -28,8 +33,10 @@ public class ProductPasiveServiceImpl implements ProductPasiveService{
     }
 
     @Override
-    public Mono<ProductPasive> createProduct(ProductPasive product) {
-        return pasiveRepository.save(product);
+    public Mono<ProductPasive> createProduct(ProductPasive productPasive) {
+        productPasive.setCreationDate(LocalDate.now());
+        productPasive.setMovements(0);
+        return pasiveRepository.save(productPasive);
     }
 
     @Override
@@ -53,5 +60,6 @@ public class ProductPasiveServiceImpl implements ProductPasiveService{
     public Mono<ProductPasive> findById(String id) {
         return pasiveRepository.findById(id);
     }
+
     
 }

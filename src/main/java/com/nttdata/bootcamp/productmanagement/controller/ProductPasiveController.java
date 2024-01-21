@@ -35,6 +35,7 @@ public class ProductPasiveController {
     }
 
     /**
+     * @param id Id del producto específico a retornar
      * @return Retorno de un product especifico
      */
     @GetMapping("/{id}")
@@ -43,9 +44,10 @@ public class ProductPasiveController {
     }
 
     /**
+     * @param clientId Id del cliente del cual retornar el producto
      * @return Retorno de todos los productos asociados a un cliente
      */
-    @GetMapping("/user/{clientId}")
+    @GetMapping("/client/{clientId}")
     public Flux<ProductPasive> findProductsByClientId(@PathVariable String clientId){
         return service.findByClientId(clientId);
     }

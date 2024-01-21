@@ -28,5 +28,5 @@ public class ProductActive {
 
     private String creditCardNumber;
 
-    private String cliendId;
+    private String clientId;
 }
