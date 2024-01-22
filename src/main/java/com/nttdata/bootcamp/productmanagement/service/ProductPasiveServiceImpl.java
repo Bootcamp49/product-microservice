@@ -1,14 +1,10 @@
 package com.nttdata.bootcamp.productmanagement.service;
 
 import java.time.LocalDate;
-import java.util.Date;
-import java.util.function.Predicate;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.nttdata.bootcamp.productmanagement.model.ProductPasive;
-import com.nttdata.bootcamp.productmanagement.model.ProductPasiveType;
 import com.nttdata.bootcamp.productmanagement.repository.ProductPasiveRepository;
 
 import lombok.RequiredArgsConstructor;
