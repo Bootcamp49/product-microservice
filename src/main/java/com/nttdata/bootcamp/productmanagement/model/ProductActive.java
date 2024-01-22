@@ -13,6 +13,10 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+
+/*
+ * Clase para los tipos de producto activos
+ */
 public class ProductActive {
 
     @Id

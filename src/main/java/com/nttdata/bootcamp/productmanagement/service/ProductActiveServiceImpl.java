@@ -16,6 +16,7 @@ public class ProductActiveServiceImpl implements ProductActiveService{
 
     @Autowired
     private final ProductActiveRepository activeRepository;
+    
     @Override
     public Flux<ProductActive> findProducts() {
         return activeRepository.findAll();
@@ -54,21 +55,23 @@ public class ProductActiveServiceImpl implements ProductActiveService{
     }
 
     @Override
-    public Mono<ProductActive> debitMovement(String id, Double debitAmount) {
+    public Mono<Double> consumeCredit(String id, Double debitAmount) {
         return activeRepository.findById(id)
         .flatMap(existingProduct -> {
             existingProduct.setCurrentCredit(existingProduct.getCurrentCredit() - debitAmount);
             return activeRepository.save(existingProduct);
-        });
+        })
+        .map(ProductActive::getCurrentCredit);
     }
 
     @Override
-    public Mono<ProductActive> depositMovement(String id, Double depositAmount) {
+    public Mono<Double> payCredit(String id, Double depositAmount) {
         return activeRepository.findById(id)
         .flatMap(existingProduct -> {
             existingProduct.setCurrentCredit(existingProduct.getCurrentCredit() + depositAmount);
             return activeRepository.save(existingProduct);
-        });
+        })
+        .map(ProductActive::getCurrentCredit);
     }
     
 }

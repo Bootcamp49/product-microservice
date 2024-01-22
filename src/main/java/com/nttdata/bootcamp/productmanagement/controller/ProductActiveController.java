@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 
 
-
 @RestController
 @RequestMapping("/product/active")
 public class ProductActiveController {
@@ -81,12 +80,23 @@ public class ProductActiveController {
         return productActiveService.deleteProduct(id);
     }
 
-    @PostMapping("/debit/{id}")
-    public Mono<ProductActive> debitMovement(@PathVariable String id, @RequestBody Double debitAmount){
-        return productActiveService.debitMovement(id, debitAmount);
+    /**
+     * @param id Id del producto al cual se le va a sustraer credito
+     * @param consumeAmount Monto a sustraer del credito
+     * @return Retorno del monto actual luego del consumo.
+     */
+    @PutMapping("/consumecredit/{id}")
+    public Mono<Double> consumeCredit(@PathVariable String id, @RequestBody Double consumeAmount){
+        return productActiveService.consumeCredit(id, consumeAmount);
     }
-    @PostMapping("/deposit/{id}")
-    public Mono<ProductActive> depositMovement(@PathVariable String id, @RequestBody Double depositAmount){
-        return productActiveService.depositMovement(id, depositAmount);
+
+    /**
+     * @param id Id del producto al cual se le va a realizar el pago de credito
+     * @param payAmount Monto a pagar del credito
+     * @return Retorno del credito actual luego del pago
+     */
+    @PutMapping("/paycredit/{id}")
+    public Mono<Double> payCredit(@PathVariable String id, @RequestBody Double payAmount){
+        return productActiveService.payCredit(id, payAmount);
     }
 }

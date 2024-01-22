@@ -80,13 +80,23 @@ public class ProductPasiveController {
         return productPasiveService.deleteProduct(id);
     }
 
-    @PostMapping("/debit/{id}")
-    public Mono<ProductPasive> debitMovement(@PathVariable String id, @RequestBody Double debitAmount) {
+    /**
+     * @param id Id del producto al cual se le va a realizar el debito
+     * @param debitAmount Monto a debitar del producto
+     * @return Retorno del monto actual luego del debito
+     */
+    @PutMapping("/debit/{id}")
+    public Mono<Double> debitMovement(@PathVariable String id, @RequestBody Double debitAmount) {
         return productPasiveService.debitMovement(id, debitAmount);
     }
 
-    @PostMapping("/deposit/{id}")
-    public Mono<ProductPasive> depositMovement(@PathVariable String id, @RequestBody Double depositAmount) {
+    /**
+     * @param id Id del producto al cual se le va a realizar el deposito
+     * @param depositAmount Monto a depositar del producto
+     * @return Retorno del monto actual luego del deposito
+     */
+    @PutMapping("/deposit/{id}")
+    public Mono<Double> depositMovement(@PathVariable String id, @RequestBody Double depositAmount) {
         return productPasiveService.depositMovement(id, depositAmount);
     }
     

@@ -58,23 +58,25 @@ public class ProductPasiveServiceImpl implements ProductPasiveService{
     }
 
     @Override
-    public Mono<ProductPasive> debitMovement(String id, Double debitAmount) {
+    public Mono<Double> debitMovement(String id, Double debitAmount) {
         return pasiveRepository.findById(id)
         .flatMap(existingProduct -> {
             existingProduct.setCurrentAmount(existingProduct.getCurrentAmount() - debitAmount);
             existingProduct.setMovements(existingProduct.getMovements() +1 );
             return pasiveRepository.save(existingProduct);
-        });
+        })
+        .map(ProductPasive::getCurrentAmount);
     }
 
     @Override
-    public Mono<ProductPasive> depositMovement(String id, Double depositAmount) {
+    public Mono<Double> depositMovement(String id, Double depositAmount) {
         return pasiveRepository.findById(id)
         .flatMap(existingProduct -> {
             existingProduct.setCurrentAmount(existingProduct.getCurrentAmount() + depositAmount);
             existingProduct.setMovements(existingProduct.getMovements() +1 );
             return pasiveRepository.save(existingProduct);
-        });
+        })
+        .map(ProductPasive::getCurrentAmount);
     }
 
     
