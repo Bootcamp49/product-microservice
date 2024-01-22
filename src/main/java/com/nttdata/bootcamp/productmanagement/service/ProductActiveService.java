@@ -19,7 +19,7 @@ public interface ProductActiveService {
 
     Mono<Void> deleteProduct(String id);
 
-    Mono<ProductActive> debitMovement(String id, ProductActive productActive);
+    Mono<ProductActive> debitMovement(String id, Double debitAmount);
 
-    Mono<ProductActive> depositMovement(String id, ProductActive productActive);
+    Mono<ProductActive> depositMovement(String id, Double depositAmount);
 }

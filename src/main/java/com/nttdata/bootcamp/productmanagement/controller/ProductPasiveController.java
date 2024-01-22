@@ -24,14 +24,14 @@ import org.springframework.web.bind.annotation.PutMapping;
 public class ProductPasiveController {
 
     @Autowired
-    private ProductPasiveService service;
+    private ProductPasiveService productPasiveService;
     
     /**
      * @return Retorno de todos los productos
      */
     @GetMapping
     public Flux<ProductPasive> findProducts(){
-        return service.findProducts();
+        return productPasiveService.findProducts();
     }
 
     /**
@@ -40,7 +40,7 @@ public class ProductPasiveController {
      */
     @GetMapping("/{id}")
     public Mono<ProductPasive> findById(@PathVariable String id){
-        return service.findById(id);
+        return productPasiveService.findById(id);
     }
 
     /**
@@ -49,7 +49,7 @@ public class ProductPasiveController {
      */
     @GetMapping("/client/{clientId}")
     public Flux<ProductPasive> findProductsByClientId(@PathVariable String clientId){
-        return service.findByClientId(clientId);
+        return productPasiveService.findByClientId(clientId);
     }
 
     /**
@@ -58,7 +58,7 @@ public class ProductPasiveController {
      */
     @PostMapping()
     public Mono<ProductPasive> createProduct(@RequestBody ProductPasive productToCreate){
-        return service.createProduct(productToCreate);
+        return productPasiveService.createProduct(productToCreate);
     }
 
     /**
@@ -68,7 +68,7 @@ public class ProductPasiveController {
      */
     @PutMapping("/{id}")
     public Mono<ProductPasive> updateProduct(@PathVariable String id, @RequestBody ProductPasive productToUpdate) {
-        return service.updateProduct(id, productToUpdate);
+        return productPasiveService.updateProduct(id, productToUpdate);
     }
 
     /**
@@ -77,17 +77,17 @@ public class ProductPasiveController {
      */
     @DeleteMapping("/{id}")
     public Mono<Void> deleteProduct(@PathVariable String id){
-        return service.deleteProduct(id);
+        return productPasiveService.deleteProduct(id);
     }
 
     @PostMapping("/debit/{id}")
-    public Mono<ProductPasive> debitMovement(@PathVariable String id, @RequestBody ProductPasive product) {
-        return service.debitMovement(id, product);
+    public Mono<ProductPasive> debitMovement(@PathVariable String id, @RequestBody Double debitAmount) {
+        return productPasiveService.debitMovement(id, debitAmount);
     }
 
     @PostMapping("/deposit/{id}")
-    public Mono<ProductPasive> depositMovement(@PathVariable String id, @RequestBody ProductPasive product) {
-        return service.depositMovement(id, product);
+    public Mono<ProductPasive> depositMovement(@PathVariable String id, @RequestBody Double depositAmount) {
+        return productPasiveService.depositMovement(id, depositAmount);
     }
     
 
