@@ -1,18 +1,20 @@
 package com.nttdata.bootcamp.productmanagement.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import com.nttdata.bootcamp.productmanagement.model.ProductActive;
 import com.nttdata.bootcamp.productmanagement.repository.ProductActiveRepository;
-
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+/**
+ * Clase que implementa la interfaz de productos activos.
+ */
 @RequiredArgsConstructor
 @Service
-public class ProductActiveServiceImpl implements ProductActiveService{
+public class ProductActiveServiceImpl implements ProductActiveService {
 
     @Autowired
     private final ProductActiveRepository activeRepository;
@@ -23,7 +25,7 @@ public class ProductActiveServiceImpl implements ProductActiveService{
     }
 
     @Override
-    public Mono<ProductActive> findById(String id) {
+    public Mono<ProductActive> findById(@NonNull String id) {
         return activeRepository.findById(id);
     }
 
@@ -33,12 +35,12 @@ public class ProductActiveServiceImpl implements ProductActiveService{
     }
 
     @Override
-    public Mono<ProductActive> createProduct(ProductActive productActive) {
+    public Mono<ProductActive> createProduct(@NonNull ProductActive productActive) {
         return activeRepository.save(productActive);
     }
 
     @Override
-    public Mono<ProductActive> updateProduct(String id, ProductActive productActive) {
+    public Mono<ProductActive> updateProduct(@NonNull String id, ProductActive productActive) {
         return activeRepository.findById(id)
         .flatMap(existingProduct -> {
             existingProduct.setAccountNumber(productActive.getAccountNumber());
@@ -50,12 +52,12 @@ public class ProductActiveServiceImpl implements ProductActiveService{
     }
 
     @Override
-    public Mono<Void> deleteProduct(String id) {
+    public Mono<Void> deleteProduct(@NonNull String id) {
         return activeRepository.deleteById(id);
     }
 
     @Override
-    public Mono<Double> consumeCredit(String id, Double debitAmount) {
+    public Mono<Double> consumeCredit(@NonNull String id, Double debitAmount) {
         return activeRepository.findById(id)
         .flatMap(existingProduct -> {
             existingProduct.setCurrentCredit(existingProduct.getCurrentCredit() - debitAmount);
@@ -65,7 +67,7 @@ public class ProductActiveServiceImpl implements ProductActiveService{
     }
 
     @Override
-    public Mono<Double> payCredit(String id, Double depositAmount) {
+    public Mono<Double> payCredit(@NonNull String id, Double depositAmount) {
         return activeRepository.findById(id)
         .flatMap(existingProduct -> {
             existingProduct.setCurrentCredit(existingProduct.getCurrentCredit() + depositAmount);

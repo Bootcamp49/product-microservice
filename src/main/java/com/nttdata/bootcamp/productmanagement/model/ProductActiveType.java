@@ -5,6 +5,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Clase para el tipo de productos activos.
+ */
 @Getter
 @Setter
 @NoArgsConstructor

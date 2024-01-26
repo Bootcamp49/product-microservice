@@ -1,22 +1,20 @@
 package com.nttdata.bootcamp.productmanagement.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
+/**
+ * Clase para la colección de Productos activos.
+ */
 @Document(collection = "productActive")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-
-/*
- * Clase para los tipos de producto activos
- */
 public class ProductActive {
 
     @Id
