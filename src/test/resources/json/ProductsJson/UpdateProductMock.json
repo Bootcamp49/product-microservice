@@ -1,0 +1,12 @@
+{
+    "id": "productId1234",
+    "accountNumber": "1234-12312312-51515",
+    "clientId": "clientId1234",
+    "creditCardNumber": "1234-1234561-31314",
+    "creditLine": 1600.0,
+    "currentCredit": 1500.0,
+    "type": {
+        "id": 1,
+        "description": "Personal"
+    }
+}
