@@ -1,0 +1,12 @@
+{
+    "id": "probe",
+    "type": {
+        "id": 1,
+        "description": "Ahorro"
+    },
+    "accountNumber": "accountNumber123",
+    "currentAmount": 10.0,
+    "movements": 0,
+    "creationDate": "2024-01-28",
+    "clientId": "clientId1234"
+}

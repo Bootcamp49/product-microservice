@@ -16,5 +16,9 @@ public class ConstantsUtil {
     public static final String findActiveProductsByClientIdMock_Success = 
         "ProductsJson/FindActiveProductsByClientIdMock.json";
     public static final String updateProductMock_Success = "ProductsJson/UpdateProductMock.json";
+
+    public static final String createPasiveProductMock_Success =
+        "ProductsJson/CreatePasiveProductMock.json";
+
     // #endregion
 }
