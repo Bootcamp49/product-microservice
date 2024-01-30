@@ -26,9 +26,12 @@ public class ProductActive {
 
     private Double currentCredit;
 
+    private Integer movements;
+
     private Double creditLine;
 
     private String creditCardNumber;
 
     private String clientId;
+
 }

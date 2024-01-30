@@ -1,5 +1,6 @@
 package com.nttdata.bootcamp.productmanagement.service;
 
+import com.nttdata.bootcamp.productmanagement.model.CommissionReportResponse;
 import com.nttdata.bootcamp.productmanagement.model.ProductActive;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -66,4 +67,8 @@ public interface ProductActiveService {
      * @return Retorno del credito actual luego del consumo
      */
     Mono<Double> payCredit(String id, Double payAmount);
+
+    Mono<Double> transfer(String originId, Double transferAmount, String finalProductId);
+
+    Mono<CommissionReportResponse> commissionReport(String productId);
 }

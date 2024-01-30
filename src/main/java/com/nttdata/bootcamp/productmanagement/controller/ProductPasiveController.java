@@ -1,6 +1,8 @@
 package com.nttdata.bootcamp.productmanagement.controller;
 
+import com.nttdata.bootcamp.productmanagement.model.CommissionReportResponse;
 import com.nttdata.bootcamp.productmanagement.model.ProductPasive;
+import com.nttdata.bootcamp.productmanagement.model.TransferRequest;
 import com.nttdata.bootcamp.productmanagement.service.ProductPasiveService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
 
 /**
  * Controlador para los productos pasivos.
@@ -71,8 +74,8 @@ public class ProductPasiveController {
      */
     @PutMapping("/{id}")
     public Mono<ProductPasive> updateProduct(
-        @PathVariable String id, 
-        @RequestBody ProductPasive productToUpdate) {
+            @PathVariable String id,
+            @RequestBody ProductPasive productToUpdate) {
         return productPasiveService.updateProduct(id, productToUpdate);
     }
 
@@ -105,9 +108,34 @@ public class ProductPasiveController {
      */
     @PutMapping("/deposit/{id}")
     public Mono<Double> depositMovement(
-        @PathVariable String id, 
-        @RequestBody Double depositAmount) {
+            @PathVariable String id,
+            @RequestBody Double depositAmount) {
         return productPasiveService.depositMovement(id, depositAmount);
+    }
+    
+    /**
+     * Método para realizar las transferencias entre diferentes productos.
+     * @param originId El id del producto de origen de la transferencia
+     * @param transferRequest El cuerpo de la transferencia con el monto y el Id de destino
+     * @return Retorna el monto actual de la cuenta de origen.
+     */
+    @PutMapping("/transfer/{originId}")
+    public Mono<Double> transfer(@PathVariable String originId,
+            @RequestBody TransferRequest transferRequest) {
+        
+        return productPasiveService.transfer(originId, 
+            transferRequest.getTransferAmount(), 
+            transferRequest.getFinalProductId());
+    }
+
+    /**
+     * Método para obtener un reporte de los movimientos que tienen comisióon.
+     * @param productId Id del producto del cual obtener el reporte
+     * @return Retorna el la cantidad y la suma total de las comisiones cobradas hasta la fecha.
+     */
+    @GetMapping("/report/commission/{productId}")
+    public Mono<CommissionReportResponse> commissionReport(@PathVariable String productId) {
+        return productPasiveService.commissionReport(productId);
     }
 
 }
