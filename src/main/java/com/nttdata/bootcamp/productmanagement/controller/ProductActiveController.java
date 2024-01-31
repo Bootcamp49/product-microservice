@@ -1,6 +1,7 @@
 package com.nttdata.bootcamp.productmanagement.controller;
 
 import com.nttdata.bootcamp.productmanagement.model.CommissionReportResponse;
+import com.nttdata.bootcamp.productmanagement.model.MovementReportResponse;
 import com.nttdata.bootcamp.productmanagement.model.ProductActive;
 import com.nttdata.bootcamp.productmanagement.model.TransferRequest;
 import com.nttdata.bootcamp.productmanagement.service.ProductActiveService;
@@ -141,6 +142,11 @@ public class ProductActiveController {
     @GetMapping("/report/commission/{productId}")
     public Mono<CommissionReportResponse> commissionReport(@PathVariable String productId) {
         return productActiveService.commissionReport(productId);
+    }
+
+    @GetMapping("/report/movements/{productId}")
+    public Flux<MovementReportResponse> movementReport(@PathVariable String productId) {
+        return productActiveService.movementReport(productId);
     }
     
 }

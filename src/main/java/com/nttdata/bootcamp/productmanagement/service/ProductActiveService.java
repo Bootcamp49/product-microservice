@@ -1,6 +1,7 @@
 package com.nttdata.bootcamp.productmanagement.service;
 
 import com.nttdata.bootcamp.productmanagement.model.CommissionReportResponse;
+import com.nttdata.bootcamp.productmanagement.model.MovementReportResponse;
 import com.nttdata.bootcamp.productmanagement.model.ProductActive;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -71,4 +72,6 @@ public interface ProductActiveService {
     Mono<Double> transfer(String originId, Double transferAmount, String finalProductId);
 
     Mono<CommissionReportResponse> commissionReport(String productId);
+
+    Flux<MovementReportResponse> movementReport(String productId);
 }

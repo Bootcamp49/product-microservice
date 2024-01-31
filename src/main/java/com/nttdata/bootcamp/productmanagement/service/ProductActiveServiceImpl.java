@@ -2,6 +2,7 @@ package com.nttdata.bootcamp.productmanagement.service;
 
 import com.nttdata.bootcamp.productmanagement.model.CommissionReportResponse;
 import com.nttdata.bootcamp.productmanagement.model.Movement;
+import com.nttdata.bootcamp.productmanagement.model.MovementReportResponse;
 import com.nttdata.bootcamp.productmanagement.model.MovementType;
 import com.nttdata.bootcamp.productmanagement.model.ProductActive;
 import com.nttdata.bootcamp.productmanagement.proxy.MovementProxy;
@@ -159,5 +160,24 @@ public class ProductActiveServiceImpl implements ProductActiveService {
         commissionResponse.setTimesAddedCommission(commissionMovements);
         commissionResponse.setTotalCommissionAmount(commissionAmount * commissionMovements);
         return Mono.just(commissionResponse);
+    }
+
+    @Override
+    public Flux<MovementReportResponse> movementReport(String productId) {
+        Flux<Movement> reportResponse = movementProxy.reportMovements(productId, 2);
+        MovementReportResponse movementResponse = new MovementReportResponse();
+        Flux<MovementReportResponse> reportToReturn = reportResponse
+            .groupBy(m -> m.getMovementDate().toLocalDate())
+            .flatMap(grouped -> grouped
+                .map(movementGrouped -> movementGrouped.getAmountMoved())
+                .reduce(0.0, (a, b) -> {
+                    return a + b;
+                })
+                .map(totalAmountMovemed -> {
+                    movementResponse.setDay(grouped.key());
+                    movementResponse.setDayAmount(totalAmountMovemed);
+                    return movementResponse;
+                }));
+        return reportToReturn;
     }
 }

@@ -1,6 +1,7 @@
 package com.nttdata.bootcamp.productmanagement.controller;
 
 import com.nttdata.bootcamp.productmanagement.model.CommissionReportResponse;
+import com.nttdata.bootcamp.productmanagement.model.MovementReportResponse;
 import com.nttdata.bootcamp.productmanagement.model.ProductPasive;
 import com.nttdata.bootcamp.productmanagement.model.TransferRequest;
 import com.nttdata.bootcamp.productmanagement.service.ProductPasiveService;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 
 /**
@@ -137,5 +140,11 @@ public class ProductPasiveController {
     public Mono<CommissionReportResponse> commissionReport(@PathVariable String productId) {
         return productPasiveService.commissionReport(productId);
     }
+
+    @GetMapping("/report/movements/{productId}")
+    public Flux<MovementReportResponse> movementReport(@PathVariable String productId) {
+        return productPasiveService.movementReport(productId);
+    }
+    
 
 }
