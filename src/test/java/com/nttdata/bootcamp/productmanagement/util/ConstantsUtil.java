@@ -15,10 +15,23 @@ public class ConstantsUtil {
         "ProductsJson/FindActiveProductByIdMock.json";
     public static final String findActiveProductsByClientIdMock_Success = 
         "ProductsJson/FindActiveProductsByClientIdMock.json";
-    public static final String updateProductMock_Success = "ProductsJson/UpdateProductMock.json";
+    public static final String updateActiveProductMock_Success = 
+        "ProductsJson/UpdateActiveProductMock.json";
 
     public static final String createPasiveProductMock_Success =
         "ProductsJson/CreatePasiveProductMock.json";
+
+    public static String findPasiveProductByIdMock_Success = 
+        "ProductsJson/FindPasiveProductByIdMock.json";
+
+    public static String findAllPasiveProductsMock_Success =
+        "ProductsJson/FindAllPasiveProductsMock.json";
+
+    public static String findPasiveProductsByClientIdMock_Success =
+        "ProductsJson/FindPasiveProductsByClientIdMock.json";
+
+    public static String updatePasiveProductMock_Success = 
+        "ProductsJson/UpdatePasiveProductMock.json";
 
     // #endregion
 }

@@ -78,7 +78,7 @@ class ProductActiveControllerTest {
     void testFindProducts() {
         when(productActiveService.findProducts())
             .thenReturn(Flux.just(productActiveMockResponse()));
-        Flux<ProductActive> responseController = productActiveService.findProducts();
+        Flux<ProductActive> responseController = productActiveController.findProducts();
         Flux<ProductActive> responseToCompare = Flux.just(
             util.serializeArchive(ConstantsUtil.findAllActiveProductsMock_Success,
             ProductActive[].class)
@@ -89,7 +89,7 @@ class ProductActiveControllerTest {
     @Test
     void testFindProductsByClientId() {
         when(productActiveService.findByClientId(anyString()))
-            .thenReturn(Flux.just());
+            .thenReturn(Flux.just(productActiveMockResponse()));
         Flux<ProductActive> responseController = productActiveController
             .findProductsByClientId("clientId1234");
         Flux<ProductActive> responseToCompare = Flux.just(
@@ -114,7 +114,9 @@ class ProductActiveControllerTest {
         Mono<ProductActive> responseController = productActiveController
             .updateProduct("productId1234", productActiveMockRequest());
         Mono<ProductActive> responseToCompare = Mono.just(
-            util.serializeArchive(ConstantsUtil.updateProductMock_Success, ProductActive.class)
+            util.serializeArchive(
+                ConstantsUtil.updateActiveProductMock_Success, 
+                ProductActive.class)
         );
         assertThat(responseController)
             .usingRecursiveComparison().isEqualTo(responseToCompare);

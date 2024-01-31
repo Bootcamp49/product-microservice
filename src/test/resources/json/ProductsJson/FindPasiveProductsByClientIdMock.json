@@ -1,0 +1,14 @@
+[
+    {
+        "id": "product5678",
+        "type": {
+            "id": 1,
+            "description": "Ahorro"
+        },
+        "accountNumber": "45678-45645645-62626",
+        "currentAmount": 10.0,
+        "movements": 0,
+        "creationDate": "2024-01-28",
+        "clientId": "clientId1234"
+    }
+]
