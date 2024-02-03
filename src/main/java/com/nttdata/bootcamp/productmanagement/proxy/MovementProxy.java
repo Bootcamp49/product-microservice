@@ -13,4 +13,6 @@ public interface MovementProxy {
     Flux<Movement> reportCommission(String productId, Integer productTypeId);
     
     Flux<Movement> reportMovements(String productId, Integer productTypeId);
+
+    Flux<Movement> getMovementsByProductId(String productId);
 }

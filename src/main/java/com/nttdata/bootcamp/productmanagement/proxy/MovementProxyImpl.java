@@ -57,4 +57,16 @@ public class MovementProxyImpl implements MovementProxy {
                 .bodyToFlux(Movement.class);
         return response;
     }
+
+    @Override
+    public Flux<Movement> getMovementsByProductId(String productId) {
+        Flux<Movement> response = webClient.get()
+                .uri(uriBuilder -> uriBuilder
+                    .path("/movement/product/{productId}")
+                    .build(productId)
+                    )
+                .retrieve()
+                .bodyToFlux(Movement.class);
+        return response;
+    }
 }

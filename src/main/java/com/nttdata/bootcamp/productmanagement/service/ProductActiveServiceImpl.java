@@ -7,6 +7,7 @@ import com.nttdata.bootcamp.productmanagement.model.MovementType;
 import com.nttdata.bootcamp.productmanagement.model.ProductActive;
 import com.nttdata.bootcamp.productmanagement.proxy.MovementProxy;
 import com.nttdata.bootcamp.productmanagement.repository.ProductActiveRepository;
+import java.time.LocalDate;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,9 @@ public class ProductActiveServiceImpl implements ProductActiveService {
     @Autowired
     private final ProductActiveRepository activeRepository;
 
+    @Autowired
+    private final AdditionalValidationService additionalValidationService;
+
     @Override
     public Flux<ProductActive> findProducts() {
         return activeRepository.findAll();
@@ -48,9 +52,13 @@ public class ProductActiveServiceImpl implements ProductActiveService {
 
     @Override
     public Mono<ProductActive> createProduct(@NonNull ProductActive productActive) {
+        if (additionalValidationService.clientHasDebts(productActive.getClientId())) {
+            return null;
+        }
         productActive.setCreditLine(
                 productActive.getCreditLine() >= 0.0 ? productActive.getCreditLine() : 0.0);
         productActive.setCurrentCredit(productActive.getCreditLine());
+        productActive.setPaymentDate(LocalDate.now());
         return activeRepository.save(productActive);
     }
 
@@ -72,7 +80,7 @@ public class ProductActiveServiceImpl implements ProductActiveService {
     }
 
     @Override
-    public Mono<Double> consumeCredit(@NonNull String id, Double debitAmount) {
+    public Mono<Double> consumeCredit(@NonNull String id, Double consumedCredit) {
         Movement movementToCreate = new Movement();
         MovementType movementType = new MovementType();
         movementType.setId(3);
@@ -81,12 +89,15 @@ public class ProductActiveServiceImpl implements ProductActiveService {
         return activeRepository.findById(id)
                 .flatMap(existingProduct -> {
                     existingProduct.setCurrentCredit(existingProduct.getCurrentCredit() 
-                        - debitAmount
+                        - consumedCredit
                         + (existingProduct.getMovements() > maxMovements ? commissionAmount : 0.0));
                     existingProduct.setMovements(existingProduct.getMovements() + 1);
+                    existingProduct.setPaymentAmount(
+                        existingProduct.getPaymentAmount() + consumedCredit
+                    );
                     
                     movementToCreate.setClientId(existingProduct.getClientId());
-                    movementToCreate.setAmountMoved(debitAmount);
+                    movementToCreate.setAmountMoved(consumedCredit);
                     movementToCreate.setHasCommission(
                             existingProduct.getMovements() > maxMovements);
                     movementToCreate.setProductId(id);
@@ -112,6 +123,10 @@ public class ProductActiveServiceImpl implements ProductActiveService {
                         + depositAmount
                         - (existingProduct.getMovements() > maxMovements ? maxMovements : 0.0));
                     existingProduct.setMovements(existingProduct.getMovements() + 1);
+                    existingProduct.setPaymentAmount(
+                        existingProduct.getPaymentAmount() - depositAmount <= 0 ? 0 : 
+                        existingProduct.getPaymentAmount() - depositAmount
+                    );
                     
                     movementToCreate.setClientId(existingProduct.getClientId());
                     movementToCreate.setAmountMoved(depositAmount);

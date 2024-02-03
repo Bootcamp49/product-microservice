@@ -1,5 +1,6 @@
 package com.nttdata.bootcamp.productmanagement.model;
 
+import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -34,4 +35,7 @@ public class ProductActive {
 
     private String clientId;
 
+    private LocalDate paymentDate;
+
+    private Double paymentAmount;
 }

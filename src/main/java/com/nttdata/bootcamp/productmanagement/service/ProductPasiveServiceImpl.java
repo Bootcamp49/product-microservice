@@ -32,6 +32,9 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
 
     private Double commissionAmount = 5.0;
 
+    @Autowired
+    private final AdditionalValidationService additionalValidationService;
+
     @Override
     public Flux<ProductPasive> findProducts() {
         return pasiveRepository.findAll();
@@ -44,6 +47,9 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
 
     @Override
     public Mono<ProductPasive> createProduct(ProductPasive productPasive) {
+        if (additionalValidationService.clientHasDebts(productPasive.getClientId())) {
+            return null;
+        }
         productPasive.setCreationDate(LocalDate.now());
         productPasive.setMovements(0);
         productPasive.setCurrentAmount(
