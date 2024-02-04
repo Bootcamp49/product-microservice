@@ -57,9 +57,10 @@ public interface ProductPasiveService {
      * Método para realizar un debito a un producto pasivo.
      * @param id Id del producto del cual se va a realizar un debito
      * @param debitAmount Monto a debitar del producto pasivo
+     * @param isFromDebitCard Flag para saber si el movimiento fue usando la tarjeta
      * @return Retorno del monto actual del producto luego del debito
      */
-    Mono<Double> debitMovement(String id, Double debitAmount);
+    Mono<Double> debitMovement(String id, Double debitAmount, Boolean isFromDebitCard);
 
     /**
      * Método para realizar un deposito a un producto pasivo.
@@ -74,4 +75,14 @@ public interface ProductPasiveService {
     Mono<CommissionReportResponse> commissionReport(String productId);
 
     Flux<MovementReportResponse> movementReport(String productId);
+
+    /**
+     * Método para realizar la asociación de una tarjeta de debito.
+     * @param productId Id del producto pasivos al cual se le realiza la asociación
+     * @param cardNumber Número de la tarjeta de debito para la asociación
+     * @return Retorna el cuerpo del producto con los datos de la tarjeta asociada
+     */
+
+    Mono<ProductPasive> associateDebitCard(String productId, String cardNumber, 
+        Boolean isPrincipalAccount);
 }

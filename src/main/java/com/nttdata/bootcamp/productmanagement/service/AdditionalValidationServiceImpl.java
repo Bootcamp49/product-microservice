@@ -1,8 +1,14 @@
 package com.nttdata.bootcamp.productmanagement.service;
 
 import com.nttdata.bootcamp.productmanagement.model.ProductActive;
+import com.nttdata.bootcamp.productmanagement.model.ProductPasive;
 import com.nttdata.bootcamp.productmanagement.repository.ProductActiveRepository;
+import com.nttdata.bootcamp.productmanagement.repository.ProductPasiveRepository;
+
 import java.time.LocalDate;
+import java.util.Comparator;
+
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,6 +23,7 @@ public class AdditionalValidationServiceImpl implements AdditionalValidationServ
     
     @Autowired
     private final ProductActiveRepository activeRepository;
+    private final ProductPasiveRepository pasiveRepository;
 
     @Override
     public Boolean clientHasDebts(String clientId) {
@@ -31,6 +38,19 @@ public class AdditionalValidationServiceImpl implements AdditionalValidationServ
         ).filter(product -> product.getPaymentAmount() > 0).count().block().intValue();
 
         return hasProductsWithDebts > 0;
+    }
+
+    @Override
+    public ProductPasive productToMakeDebitPay(@NonNull String productId, Double amountToConsume) {
+        String debitCardNumber = pasiveRepository.findById(productId)
+            .map(existingProduct -> existingProduct.getDebitCardNumber()).block();
+
+        ProductPasive productToReturn = pasiveRepository.findByDebitCardNumber(debitCardNumber)
+            .filter(p -> p.getCurrentAmount() >= amountToConsume)
+            .sort(Comparator.comparing(ProductPasive::getAffiliateCardDatetime))
+            .blockFirst();
+        
+        return productToReturn;
     }
     
 }

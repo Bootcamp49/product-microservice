@@ -8,6 +8,7 @@ import com.nttdata.bootcamp.productmanagement.model.ProductPasive;
 import com.nttdata.bootcamp.productmanagement.proxy.MovementProxy;
 import com.nttdata.bootcamp.productmanagement.repository.ProductPasiveRepository;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,32 +81,34 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
     }
 
     @Override
-    public Mono<Double> debitMovement(@NonNull String id, Double debitAmount) {
-        Movement movementToCreate = new Movement();
+    public Mono<Double> debitMovement(@NonNull String id, Double debitAmount, 
+        Boolean isFromDebitCard) {
         MovementType movementType = new MovementType();
         movementType.setId(1);
         movementType.setDescription("Debito");
+        ProductPasive productToDebit = pasiveRepository.findById(id).block();
+        if (productToDebit.getCurrentAmount() < debitAmount) {
+            productToDebit = additionalValidationService.productToMakeDebitPay(id, debitAmount);
+            if (productToDebit == null) {
+                return null;
+            }
+        }
+        Movement movementToCreate = new Movement();
+        movementToCreate.setClientId(productToDebit.getClientId());
+        movementToCreate.setAmountMoved(debitAmount);
+        movementToCreate.setHasCommission(
+            productToDebit.getMovements() > maxMovements);
+        movementToCreate.setProductId(id);
+        movementToCreate.setIsFromDebitCard(isFromDebitCard);
+        movementToCreate.setType(movementType);
+        movementProxy.createMovement(movementToCreate);
 
-        Mono<Double> responseDebitMovement = pasiveRepository.findById(id)
-                .flatMap(existingProduct -> {
-                    existingProduct.setCurrentAmount(
-                        existingProduct.getCurrentAmount() - debitAmount
-                        + (existingProduct.getMovements() > maxMovements ? commissionAmount : 0.0));
-                    existingProduct.setMovements(existingProduct.getMovements() + 1);
-
-                    movementToCreate.setClientId(existingProduct.getClientId());
-                    movementToCreate.setAmountMoved(debitAmount);
-                    movementToCreate.setHasCommission(
-                            existingProduct.getMovements() > maxMovements);
-                    movementToCreate.setProductId(id);
-
-                    movementToCreate.setType(movementType);
-                    movementProxy.createMovement(movementToCreate);
-
-                    return pasiveRepository.save(existingProduct);
-                })
-                .map(ProductPasive::getCurrentAmount);
-        return responseDebitMovement;
+        productToDebit.setCurrentAmount(
+            productToDebit.getCurrentAmount() - debitAmount
+            + (productToDebit.getMovements() > maxMovements ? commissionAmount : 0.0));
+        productToDebit.setMovements(productToDebit.getMovements() + 1);
+        pasiveRepository.save(productToDebit);
+        return Mono.just(productToDebit.getCurrentAmount());
     }
 
     @Override
@@ -190,5 +193,17 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
                     return movementResponse;
                 }));
         return reportToReturn;
+    }
+
+    @Override
+    public Mono<ProductPasive> associateDebitCard(@NonNull String productId, String cardNumber, 
+        Boolean isPrincipalAccount) {
+        return pasiveRepository.findById(productId)
+            .flatMap(existingProduct -> {
+                existingProduct.setAffiliateCardDatetime(LocalDateTime.now());
+                existingProduct.setDebitCardNumber(cardNumber);
+                existingProduct.setIsPrincipalAccount(isPrincipalAccount);
+                return pasiveRepository.save(existingProduct);
+            });
     }
 }

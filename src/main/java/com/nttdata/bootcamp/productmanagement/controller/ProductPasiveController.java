@@ -98,8 +98,9 @@ public class ProductPasiveController {
      * @return Retorno del monto actual luego del debito
      */
     @PutMapping("/debit/{id}")
-    public Mono<Double> debitMovement(@PathVariable String id, @RequestBody Double debitAmount) {
-        return productPasiveService.debitMovement(id, debitAmount);
+    public Mono<Double> debitMovement(@PathVariable String id, @RequestBody Double debitAmount, 
+        @RequestBody Boolean isFromDebitCard) {
+        return productPasiveService.debitMovement(id, debitAmount, isFromDebitCard);
     }
 
     /**
@@ -133,17 +134,33 @@ public class ProductPasiveController {
     /**
      * Método para obtener un reporte de los movimientos que tienen comisióon.
      * @param productId Id del producto del cual obtener el reporte
-     * @return Retorna el la cantidad y la suma total de las comisiones cobradas hasta la fecha.
+     * @return Retorna la cantidad y la suma total de las comisiones cobradas hasta la fecha.
      */
     @GetMapping("/report/commission/{productId}")
     public Mono<CommissionReportResponse> commissionReport(@PathVariable String productId) {
         return productPasiveService.commissionReport(productId);
     }
 
+    /**
+     * Método para obtener un reporte de movimientos del mes actual.
+     * @param productId Id del producto del cual obtener el reporte.
+     * @return Retorna el reporte de movimientos del mes actual.
+     */
     @GetMapping("/report/movements/{productId}")
     public Flux<MovementReportResponse> movementReport(@PathVariable String productId) {
         return productPasiveService.movementReport(productId);
     }
-    
 
+    /**
+     * Método para asociar tarjetas de debito.
+     * @param productId Id del producto a asociar la tarjeta
+     * @param cardNumber Número de la tarjeta a asociar
+     * @param isPrincipalAccount flag para saber si es la cuenta principal
+     * @return Retorna el cuerpo del producto al que se le asoció la tarjeta
+     */
+    public Mono<ProductPasive> associateDebitCard(@PathVariable String productId, 
+        @RequestBody String cardNumber,
+        @RequestBody Boolean isPrincipalAccount) {
+        return productPasiveService.associateDebitCard(productId, cardNumber, isPrincipalAccount);
+    }
 }
