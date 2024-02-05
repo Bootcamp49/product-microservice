@@ -100,10 +100,10 @@ class ProductActiveControllerTest {
 
     @Test
     void testPayCredit() {
-        when(productActiveService.payCredit(anyString(), anyDouble()))
+        when(productActiveService.payCredit(anyString(), anyDouble(), anyString()))
             .thenReturn(Mono.just(15.0));
         Mono<Double> responseController = productActiveController
-            .payCredit("productId1234", 5.0);
+            .payCredit("productId1234", 5.0, "cardNumber");
         assertThat(responseController).usingRecursiveComparison().isEqualTo(Mono.just(15.0));
     }
 

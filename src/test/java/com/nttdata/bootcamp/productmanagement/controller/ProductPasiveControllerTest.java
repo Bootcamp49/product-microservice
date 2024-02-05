@@ -48,10 +48,10 @@ class ProductPasiveControllerTest {
 
     @Test
     void testDebitMovement() {
-        when(productPasiveService.debitMovement(anyString(), anyDouble()))
+        when(productPasiveService.debitMovement(anyString(), anyDouble(), false))
             .thenReturn(Mono.just(10.0));
         Mono<Double> responseController = productPasiveController
-            .debitMovement("product5678", 5.0);
+            .debitMovement("product5678", 5.0, false);
         assertThat(responseController).usingRecursiveComparison().isEqualTo(responseController);
     }
 

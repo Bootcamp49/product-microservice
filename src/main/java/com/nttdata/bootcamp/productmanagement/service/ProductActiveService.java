@@ -65,9 +65,10 @@ public interface ProductActiveService {
      * Método para realizar el pago de crédito de un producto activo por su id.
      * @param id Id del producto del cual se va a pagar su credito
      * @param payAmount Monto a pagar del producto
+     * @param debitCardNumber Númer de tarjeta de debito con la que se está haciendo el pago
      * @return Retorno del credito actual luego del consumo
      */
-    Mono<Double> payCredit(String id, Double payAmount);
+    Mono<Double> payCredit(String id, Double payAmount, String debitCardNumber);
 
     Mono<Double> transfer(String originId, Double transferAmount, String finalProductId);
 

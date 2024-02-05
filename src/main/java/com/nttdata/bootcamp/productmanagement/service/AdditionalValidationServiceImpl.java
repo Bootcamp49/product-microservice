@@ -4,10 +4,8 @@ import com.nttdata.bootcamp.productmanagement.model.ProductActive;
 import com.nttdata.bootcamp.productmanagement.model.ProductPasive;
 import com.nttdata.bootcamp.productmanagement.repository.ProductActiveRepository;
 import com.nttdata.bootcamp.productmanagement.repository.ProductPasiveRepository;
-
 import java.time.LocalDate;
 import java.util.Comparator;
-
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +17,7 @@ import reactor.core.publisher.Flux;
  */
 @RequiredArgsConstructor
 @Service
-public class AdditionalValidationServiceImpl implements AdditionalValidationService{
+public class AdditionalValidationServiceImpl implements AdditionalValidationService {
     
     @Autowired
     private final ProductActiveRepository activeRepository;
@@ -51,6 +49,15 @@ public class AdditionalValidationServiceImpl implements AdditionalValidationServ
             .blockFirst();
         
         return productToReturn;
+    }
+
+    @Override
+    public Boolean productPasiveValidToPay(@NonNull String productId, Double amountToConsume) {
+        Boolean response = false;
+        response = pasiveRepository.findById(productId)
+            .filter(existingProduct -> existingProduct.getCurrentAmount() >= amountToConsume)
+            .block() != null;
+        return response;
     }
     
 }

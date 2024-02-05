@@ -111,11 +111,26 @@ public class ProductActiveServiceImpl implements ProductActiveService {
     }
 
     @Override
-    public Mono<Double> payCredit(@NonNull String id, Double depositAmount) {
-        Movement movementToCreate = new Movement();
+    public Mono<Double> payCredit(@NonNull String id, Double depositAmount, 
+        String pasiveProductId) {
         MovementType movementType = new MovementType();
         movementType.setId(4);
         movementType.setDescription("Pago credito");
+        Movement movementToCreate = new Movement();
+        if (pasiveProductId != null) {
+            if (!additionalValidationService
+                .productPasiveValidToPay(pasiveProductId, depositAmount)) {
+                pasiveProductId = additionalValidationService
+                    .productToMakeDebitPay(pasiveProductId, depositAmount) != null 
+                    ? additionalValidationService.productToMakeDebitPay(pasiveProductId, 
+                        depositAmount).getId() : null;
+                if (pasiveProductId == null) {
+                    return null;
+                }
+            }
+            movementToCreate.setProductOriginId(pasiveProductId);
+            movementToCreate.setIsFromDebitCard(true);
+        }
 
         return activeRepository.findById(id)
                 .flatMap(existingProduct -> {
@@ -133,7 +148,6 @@ public class ProductActiveServiceImpl implements ProductActiveService {
                     movementToCreate.setHasCommission(
                             existingProduct.getMovements() > maxMovements);
                     movementToCreate.setProductId(id);
-
                     movementToCreate.setType(movementType);
                     movementProxy.createMovement(movementToCreate);
                     return activeRepository.save(existingProduct);

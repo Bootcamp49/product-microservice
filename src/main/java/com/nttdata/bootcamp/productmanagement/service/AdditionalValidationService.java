@@ -9,4 +9,6 @@ public interface AdditionalValidationService {
     Boolean clientHasDebts(String clientId);
 
     ProductPasive productToMakeDebitPay(String productId, Double amountToConsume);
+
+    Boolean productPasiveValidToPay(String productId, Double amountToConsume);
 }

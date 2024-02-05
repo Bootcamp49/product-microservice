@@ -86,14 +86,16 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
         MovementType movementType = new MovementType();
         movementType.setId(1);
         movementType.setDescription("Debito");
+        Movement movementToCreate = new Movement();
         ProductPasive productToDebit = pasiveRepository.findById(id).block();
-        if (productToDebit.getCurrentAmount() < debitAmount) {
-            productToDebit = additionalValidationService.productToMakeDebitPay(id, debitAmount);
-            if (productToDebit == null) {
-                return null;
+        if (isFromDebitCard) {
+            if (productToDebit.getCurrentAmount() < debitAmount) {
+                productToDebit = additionalValidationService.productToMakeDebitPay(id, debitAmount);
+                if (productToDebit == null) {
+                    return null;
+                }
             }
         }
-        Movement movementToCreate = new Movement();
         movementToCreate.setClientId(productToDebit.getClientId());
         movementToCreate.setAmountMoved(debitAmount);
         movementToCreate.setHasCommission(

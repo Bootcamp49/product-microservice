@@ -116,8 +116,9 @@ public class ProductActiveController {
      * @return Retorno del credito actual luego del pago
      */
     @PutMapping("/paycredit/{id}")
-    public Mono<Double> payCredit(@PathVariable String id, @RequestBody Double payAmount) {
-        return productActiveService.payCredit(id, payAmount);
+    public Mono<Double> payCredit(@PathVariable String id, @RequestBody Double payAmount, 
+        @RequestBody String pasiveProductId) {
+        return productActiveService.payCredit(id, payAmount, pasiveProductId);
     }
 
     /**
