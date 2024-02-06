@@ -1,6 +1,7 @@
 package com.nttdata.bootcamp.productmanagement.proxy;
 
 import com.nttdata.bootcamp.productmanagement.model.Movement;
+import java.util.List;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -65,6 +66,19 @@ public class MovementProxyImpl implements MovementProxy {
                     .path("/movement/product/{productId}")
                     .build(productId)
                     )
+                .retrieve()
+                .bodyToFlux(Movement.class);
+        return response;
+    }
+
+    @Override
+    public Flux<Movement> getMovementReportByCard(List<String> productsId, Integer productTypeId) {
+        Flux<Movement> response = webClient.get()
+            .uri(uriBuilder -> uriBuilder
+                .path("/movement/report/card")
+                .queryParam("productTypeId", productTypeId)
+                .queryParam("productsId", String.join(",", productsId))
+                .build())
                 .retrieve()
                 .bodyToFlux(Movement.class);
         return response;

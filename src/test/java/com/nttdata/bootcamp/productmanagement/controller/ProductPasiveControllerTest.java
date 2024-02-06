@@ -14,6 +14,8 @@ import com.nttdata.bootcamp.productmanagement.service.ProductPasiveService;
 import com.nttdata.bootcamp.productmanagement.util.ConstantsUtil;
 import com.nttdata.bootcamp.productmanagement.util.Util;
 import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -50,8 +52,11 @@ class ProductPasiveControllerTest {
     void testDebitMovement() {
         when(productPasiveService.debitMovement(anyString(), anyDouble(), false))
             .thenReturn(Mono.just(10.0));
+        Map<String, Object> requestBody = new HashMap<String, Object>();
+        requestBody.put("debitAmount", 5.0);
+        requestBody.put("isFromDebitCard", false);
         Mono<Double> responseController = productPasiveController
-            .debitMovement("product5678", 5.0, false);
+            .debitMovement("product5678", requestBody);
         assertThat(responseController).usingRecursiveComparison().isEqualTo(responseController);
     }
 
@@ -67,8 +72,10 @@ class ProductPasiveControllerTest {
     void testDepositMovement() {
         when(productPasiveService.depositMovement(anyString(), anyDouble()))
             .thenReturn(Mono.just(15.0));
+        Map<String, Double> depositAmount = new HashMap<String, Double>();
+        depositAmount.put("depositAmount", 5.0);
         Mono<Double> responseController = productPasiveController
-            .depositMovement("productId5678", 5.0);
+            .depositMovement("productId5678", depositAmount);
         assertThat(responseController).usingRecursiveComparison().isEqualTo(Mono.just(15.0));
     }
 

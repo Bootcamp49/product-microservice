@@ -12,6 +12,8 @@ import com.nttdata.bootcamp.productmanagement.model.ProductActiveType;
 import com.nttdata.bootcamp.productmanagement.service.ProductActiveService;
 import com.nttdata.bootcamp.productmanagement.util.ConstantsUtil;
 import com.nttdata.bootcamp.productmanagement.util.Util;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,8 +36,10 @@ class ProductActiveControllerTest {
     void testConsumeCredit() {
         when(productActiveService.consumeCredit(anyString(), anyDouble()))
             .thenReturn(Mono.just(10.0));
+        Map<String, Double> requestAmount = new HashMap<>();
+        requestAmount.put("consumeAmount", 5.0);
         Mono<Double> responseController = productActiveController
-            .consumeCredit("productId1234", 5.0);
+            .consumeCredit("productId1234", requestAmount);
         assertThat(responseController).usingRecursiveComparison().isEqualTo(Mono.just(10.0));
     }
 
@@ -102,8 +106,13 @@ class ProductActiveControllerTest {
     void testPayCredit() {
         when(productActiveService.payCredit(anyString(), anyDouble(), anyString()))
             .thenReturn(Mono.just(15.0));
+
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("payAmount", 5.0);
+        requestBody.put("pasiveProductId", "pasiveProductId1");
+
         Mono<Double> responseController = productActiveController
-            .payCredit("productId1234", 5.0, "cardNumber");
+            .payCredit("productId1234", requestBody);
         assertThat(responseController).usingRecursiveComparison().isEqualTo(Mono.just(15.0));
     }
 

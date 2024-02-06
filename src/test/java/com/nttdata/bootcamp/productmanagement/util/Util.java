@@ -2,7 +2,6 @@ package com.nttdata.bootcamp.productmanagement.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;

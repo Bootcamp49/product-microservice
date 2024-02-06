@@ -8,6 +8,7 @@ import com.nttdata.bootcamp.productmanagement.model.ProductActive;
 import com.nttdata.bootcamp.productmanagement.proxy.MovementProxy;
 import com.nttdata.bootcamp.productmanagement.repository.ProductActiveRepository;
 import java.time.LocalDate;
+import java.util.List;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +60,7 @@ public class ProductActiveServiceImpl implements ProductActiveService {
                 productActive.getCreditLine() >= 0.0 ? productActive.getCreditLine() : 0.0);
         productActive.setCurrentCredit(productActive.getCreditLine());
         productActive.setPaymentDate(LocalDate.now());
+        productActive.setPaymentAmount(0.0);
         return activeRepository.save(productActive);
     }
 
@@ -80,34 +82,31 @@ public class ProductActiveServiceImpl implements ProductActiveService {
     }
 
     @Override
-    public Mono<Double> consumeCredit(@NonNull String id, Double consumedCredit) {
-        Movement movementToCreate = new Movement();
+    public Mono<Double> consumeCredit(@NonNull String id, Double consumedCredit) { 
         MovementType movementType = new MovementType();
         movementType.setId(3);
         movementType.setDescription("Consumo credito");
 
-        return activeRepository.findById(id)
-                .flatMap(existingProduct -> {
-                    existingProduct.setCurrentCredit(existingProduct.getCurrentCredit() 
-                        - consumedCredit
-                        + (existingProduct.getMovements() > maxMovements ? commissionAmount : 0.0));
-                    existingProduct.setMovements(existingProduct.getMovements() + 1);
-                    existingProduct.setPaymentAmount(
-                        existingProduct.getPaymentAmount() + consumedCredit
-                    );
-                    
-                    movementToCreate.setClientId(existingProduct.getClientId());
-                    movementToCreate.setAmountMoved(consumedCredit);
-                    movementToCreate.setHasCommission(
-                            existingProduct.getMovements() > maxMovements);
-                    movementToCreate.setProductId(id);
-                    
-                    movementToCreate.setType(movementType);
-                    movementProxy.createMovement(movementToCreate);
-                    
-                    return activeRepository.save(existingProduct);
-                })
-                .map(ProductActive::getCurrentCredit);
+        ProductActive existingProduct = activeRepository.findById(id).block();
+
+        Movement movementToCreate = new Movement();
+
+        movementToCreate.setClientId(existingProduct.getClientId());
+        movementToCreate.setAmountMoved(-(consumedCredit));
+        movementToCreate.setHasCommission(
+                existingProduct.getMovements() > maxMovements);
+        movementToCreate.setProductId(id);
+        movementToCreate.setType(movementType);
+        movementProxy.createMovement(movementToCreate).block();
+
+        existingProduct.setCurrentCredit(existingProduct.getCurrentCredit() 
+            - (consumedCredit
+            + (existingProduct.getMovements() > maxMovements ? commissionAmount : 0.0)));
+        existingProduct.setMovements(existingProduct.getMovements() + 1);
+        existingProduct.setPaymentAmount(
+            existingProduct.getPaymentAmount() + consumedCredit);
+
+        return activeRepository.save(existingProduct).map(ProductActive::getCurrentCredit);
     }
 
     @Override
@@ -132,27 +131,26 @@ public class ProductActiveServiceImpl implements ProductActiveService {
             movementToCreate.setIsFromDebitCard(true);
         }
 
-        return activeRepository.findById(id)
-                .flatMap(existingProduct -> {
-                    existingProduct.setCurrentCredit(existingProduct.getCurrentCredit() 
-                        + depositAmount
-                        - (existingProduct.getMovements() > maxMovements ? maxMovements : 0.0));
-                    existingProduct.setMovements(existingProduct.getMovements() + 1);
-                    existingProduct.setPaymentAmount(
-                        existingProduct.getPaymentAmount() - depositAmount <= 0 ? 0 : 
-                        existingProduct.getPaymentAmount() - depositAmount
-                    );
-                    
-                    movementToCreate.setClientId(existingProduct.getClientId());
-                    movementToCreate.setAmountMoved(depositAmount);
-                    movementToCreate.setHasCommission(
-                            existingProduct.getMovements() > maxMovements);
-                    movementToCreate.setProductId(id);
-                    movementToCreate.setType(movementType);
-                    movementProxy.createMovement(movementToCreate);
-                    return activeRepository.save(existingProduct);
-                })
-                .map(ProductActive::getCurrentCredit);
+        ProductActive existingProduct = activeRepository.findById(id).block();
+
+        movementToCreate.setClientId(existingProduct.getClientId());
+        movementToCreate.setAmountMoved(depositAmount);
+        movementToCreate.setHasCommission(
+                existingProduct.getMovements() > maxMovements);
+        movementToCreate.setProductId(id);
+        movementToCreate.setType(movementType);
+        movementProxy.createMovement(movementToCreate).block();
+
+        existingProduct.setCurrentCredit(existingProduct.getCurrentCredit() 
+            + (depositAmount
+            - (existingProduct.getMovements() > maxMovements ? maxMovements : 0.0)));
+        existingProduct.setMovements(existingProduct.getMovements() + 1);
+        existingProduct.setPaymentAmount(
+            existingProduct.getPaymentAmount() - depositAmount <= 0 ? 0 : 
+            existingProduct.getPaymentAmount() - depositAmount
+        );
+        return activeRepository.save(existingProduct)
+        .map(ProductActive::getCurrentCredit);
     }
 
     @Override
@@ -208,5 +206,17 @@ public class ProductActiveServiceImpl implements ProductActiveService {
                     return movementResponse;
                 }));
         return reportToReturn;
+    }
+
+    @Override
+    public Flux<Movement> reportLastMovementsCreditCard(String cardNumber) {
+        List<String> productId = activeRepository
+            .findByCreditCardNumber(cardNumber).map(p -> p.getId()).collectList().block();
+
+        if (productId.size() <= 0) {
+            return null;
+        }
+        Flux<Movement> lastMovements = movementProxy.getMovementReportByCard(productId, 2);
+        return lastMovements;
     }
 }

@@ -26,15 +26,17 @@ public class AdditionalValidationServiceImpl implements AdditionalValidationServ
     @Override
     public Boolean clientHasDebts(String clientId) {
         Flux<ProductActive> clientProductsActive = activeRepository.findByClientId(clientId);
-        LocalDate currentDate = LocalDate.now();
-        Integer hasProductsWithDebts = clientProductsActive.filter(
-            product -> {
-                return (product.getPaymentDate().getMonthValue() >= currentDate.getMonthValue()
-                    || product.getPaymentDate().getMonthValue() <= currentDate.getMonthValue())
-                    && product.getPaymentDate().getDayOfMonth() <= currentDate.getDayOfMonth();
-            }
-        ).filter(product -> product.getPaymentAmount() > 0).count().block().intValue();
-
+        Integer hasProductsWithDebts = 0;
+        if (clientProductsActive.count().block() > 0) {
+            LocalDate currentDate = LocalDate.now();
+            hasProductsWithDebts = clientProductsActive.filter(
+                product -> {
+                    return (product.getPaymentDate().getMonthValue() >= currentDate.getMonthValue()
+                        || product.getPaymentDate().getMonthValue() <= currentDate.getMonthValue())
+                        && product.getPaymentDate().getDayOfMonth() <= currentDate.getDayOfMonth();
+                }
+            ).filter(product -> product.getPaymentAmount() > 0).count().block().intValue();
+        }
         return hasProductsWithDebts > 0;
     }
 
@@ -55,7 +57,9 @@ public class AdditionalValidationServiceImpl implements AdditionalValidationServ
     public Boolean productPasiveValidToPay(@NonNull String productId, Double amountToConsume) {
         Boolean response = false;
         response = pasiveRepository.findById(productId)
-            .filter(existingProduct -> existingProduct.getCurrentAmount() >= amountToConsume)
+            .filter(existingProduct -> existingProduct.getCurrentAmount() >= amountToConsume
+                && (existingProduct.getDebitCardNumber() != null 
+                && !existingProduct.getDebitCardNumber().trim().isEmpty()))
             .block() != null;
         return response;
     }

@@ -9,6 +9,7 @@ import com.nttdata.bootcamp.productmanagement.proxy.MovementProxy;
 import com.nttdata.bootcamp.productmanagement.repository.ProductPasiveRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,20 +98,20 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
             }
         }
         movementToCreate.setClientId(productToDebit.getClientId());
-        movementToCreate.setAmountMoved(debitAmount);
+        movementToCreate.setAmountMoved(-(debitAmount));
         movementToCreate.setHasCommission(
             productToDebit.getMovements() > maxMovements);
         movementToCreate.setProductId(id);
         movementToCreate.setIsFromDebitCard(isFromDebitCard);
         movementToCreate.setType(movementType);
-        movementProxy.createMovement(movementToCreate);
+        movementProxy.createMovement(movementToCreate).block();
 
         productToDebit.setCurrentAmount(
-            productToDebit.getCurrentAmount() - debitAmount
-            + (productToDebit.getMovements() > maxMovements ? commissionAmount : 0.0));
+            productToDebit.getCurrentAmount() - (debitAmount
+            + (productToDebit.getMovements() > maxMovements ? commissionAmount : 0.0)));
         productToDebit.setMovements(productToDebit.getMovements() + 1);
-        pasiveRepository.save(productToDebit);
-        return Mono.just(productToDebit.getCurrentAmount());
+        
+        return pasiveRepository.save(productToDebit).map(ProductPasive::getCurrentAmount);
     }
 
     @Override
@@ -120,23 +121,21 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
         movementType.setId(2);
         movementType.setDescription("Deposito");
 
-        return pasiveRepository.findById(id)
-                .flatMap(existingProduct -> {
-                    existingProduct.setCurrentAmount(existingProduct.getCurrentAmount() 
-                        + depositAmount
-                        - (existingProduct.getMovements() > maxMovements ? commissionAmount : 0.0));
-                    existingProduct.setMovements(existingProduct.getMovements() + 1);
+        ProductPasive existingProduct = pasiveRepository.findById(id).block();
 
-                    movementToCreate.setClientId(existingProduct.getClientId());
-                    movementToCreate.setAmountMoved(depositAmount);
-                    movementToCreate.setHasCommission(
-                            existingProduct.getMovements() > maxMovements);
-                    movementToCreate.setProductId(id);
+        movementToCreate.setClientId(existingProduct.getClientId());
+        movementToCreate.setAmountMoved(depositAmount);
+        movementToCreate.setHasCommission(
+                existingProduct.getMovements() > maxMovements);
+        movementToCreate.setProductId(id);
+        movementToCreate.setType(movementType);
+        movementProxy.createMovement(movementToCreate).block();
 
-                    movementToCreate.setType(movementType);
-                    movementProxy.createMovement(movementToCreate);
-                    return pasiveRepository.save(existingProduct);
-                })
+        existingProduct.setCurrentAmount(existingProduct.getCurrentAmount() 
+            + (depositAmount
+            - (existingProduct.getMovements() > maxMovements ? commissionAmount : 0.0)));
+        existingProduct.setMovements(existingProduct.getMovements() + 1);
+        return pasiveRepository.save(existingProduct)
                 .map(ProductPasive::getCurrentAmount);
     }
 
@@ -144,27 +143,21 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
     public Mono<Double> transfer(@NonNull String originId,
             Double transferAmount, @NonNull String finalId) {
         
-        final Mono<Double> originCurrentAmount = depositMovement(originId, transferAmount);
+        final Mono<Double> originCurrentAmount = debitMovement(originId, transferAmount, false);
         final Movement movementToCreate = new Movement();
         MovementType movementType = new MovementType();
         movementType.setId(5);
         movementType.setDescription("Transferencia");
+        ProductPasive existingProduct = pasiveRepository.findById(finalId).block();
 
-        pasiveRepository.findById(finalId)
-                .flatMap(existingProduct -> {
-                    existingProduct.setCurrentAmount(
-                        existingProduct.getCurrentAmount() + transferAmount
-                    );
-                    movementToCreate.setClientId(existingProduct.getClientId());
-                    movementToCreate.setAmountMoved(transferAmount);
-                    movementToCreate.setProductId(finalId);
-                    movementToCreate.setType(movementType);
-                    movementToCreate.setProductOriginId(originId);
-                    movementProxy.createMovement(movementToCreate);
+        movementToCreate.setClientId(existingProduct.getClientId());
+        movementToCreate.setAmountMoved(transferAmount 
+            - (existingProduct.getMovements() > maxMovements ? commissionAmount : 0.0));
 
-                    return pasiveRepository.save(existingProduct);
-                }).map(ProductPasive::getCurrentAmount);
-
+        movementToCreate.setProductId(finalId);
+        movementToCreate.setType(movementType);
+        movementToCreate.setProductOriginId(originId);
+        movementProxy.createMovement(movementToCreate).block();
         return originCurrentAmount;
     }
     
@@ -207,5 +200,20 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
                 existingProduct.setIsPrincipalAccount(isPrincipalAccount);
                 return pasiveRepository.save(existingProduct);
             });
+    }
+
+    @Override
+    public Flux<Movement> reportLastMovementsDebitCard(String cardNumber) {
+        List<String> productsRelated = pasiveRepository
+            .findByDebitCardNumber(cardNumber).map(p -> p.getId()).collectList().block();
+        Flux<Movement> lastMovements = movementProxy.getMovementReportByCard(productsRelated, 1);
+        return lastMovements;
+    }
+
+    @Override
+    public Mono<Double> getCurrentBalance(String cardNumber) {
+        Double currentAmount = pasiveRepository.findByDebitCardNumber(cardNumber)
+            .filter(p -> p.getIsPrincipalAccount()).blockFirst().getCurrentAmount();
+        return Mono.just(currentAmount);
     }
 }

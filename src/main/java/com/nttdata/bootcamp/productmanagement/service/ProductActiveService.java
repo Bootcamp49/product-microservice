@@ -1,6 +1,7 @@
 package com.nttdata.bootcamp.productmanagement.service;
 
 import com.nttdata.bootcamp.productmanagement.model.CommissionReportResponse;
+import com.nttdata.bootcamp.productmanagement.model.Movement;
 import com.nttdata.bootcamp.productmanagement.model.MovementReportResponse;
 import com.nttdata.bootcamp.productmanagement.model.ProductActive;
 import reactor.core.publisher.Flux;
@@ -70,9 +71,33 @@ public interface ProductActiveService {
      */
     Mono<Double> payCredit(String id, Double payAmount, String debitCardNumber);
 
+    /**
+     * Método para realizar transferencias entre cuentas de crédito.
+     * @param originId Id del producto desde donde se está haciendo la transferencia
+     * @param transferAmount Monto a transferir
+     * @param finalProductId Id del producto de destino de la transferencia
+     * @return Retorno del saldo actual luego de la transferencia del producto de origen
+     */
     Mono<Double> transfer(String originId, Double transferAmount, String finalProductId);
 
+    /**
+     * Método para retornar el reporte de comisiones.
+     * @param productId Id del producto del cual obtener el reporte de comisiones
+     * @return Retorna el reporte con la cantidad de movimientos con comisión y el total
+     */
     Mono<CommissionReportResponse> commissionReport(String productId);
 
+    /**
+     * Método para retornar el reporte de movimientos.
+     * @param productId Id del producto a retornar el reporte
+     * @return Retorna el balance diario de movimientos diarios del mes actual
+     */
     Flux<MovementReportResponse> movementReport(String productId);
+
+    /**
+     * Método para retornar el reporte de ultimos 10 movimientos de la tarjeta.
+     * @param cardNumber Número de la tarjeta del cual obtener los movimientos
+     * @return Retorna el reporte de los últimos 10 movimientos de la tarjeta de Credito
+     */
+    Flux<Movement> reportLastMovementsCreditCard(String cardNumber);
 }

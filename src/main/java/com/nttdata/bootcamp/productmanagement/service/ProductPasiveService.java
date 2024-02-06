@@ -1,6 +1,7 @@
 package com.nttdata.bootcamp.productmanagement.service;
 
 import com.nttdata.bootcamp.productmanagement.model.CommissionReportResponse;
+import com.nttdata.bootcamp.productmanagement.model.Movement;
 import com.nttdata.bootcamp.productmanagement.model.MovementReportResponse;
 import com.nttdata.bootcamp.productmanagement.model.ProductPasive;
 import reactor.core.publisher.Flux;
@@ -70,10 +71,27 @@ public interface ProductPasiveService {
      */
     Mono<Double> depositMovement(String id, Double depositAmount);
     
+    /**
+     * Método para realizar una transferencia entre productos de debito.
+     * @param originId Id del producto de origen de la transferencia
+     * @param transferAmount Monto a transferir
+     * @param finalId Id del producto de destino de la transferencia
+     * @return Retorno del monto actual del producto de origen.
+     */
     Mono<Double> transfer(String originId, Double transferAmount, String finalId);
 
+    /**
+     * Método para obtener el reporte de comisiones de un producto.
+     * @param productId Id del producto del cual obtener el reporte
+     * @return Retorna el reporte de comisiones del producto elegido
+     */
     Mono<CommissionReportResponse> commissionReport(String productId);
 
+    /**
+     * Método para obtener el balance de movimientos de un producto.
+     * @param productId Id del producto del cual obtener el reporte
+     * @return Retorna el reporte del balance de movimientos del producto
+     */
     Flux<MovementReportResponse> movementReport(String productId);
 
     /**
@@ -85,4 +103,18 @@ public interface ProductPasiveService {
 
     Mono<ProductPasive> associateDebitCard(String productId, String cardNumber, 
         Boolean isPrincipalAccount);
+
+    /**
+     * Método para obtener el reporte de los últimos 10 movimientos de la tarjeta.
+     * @param cardNumber Número de la tarjeta patra obtener los movimientos.
+     * @return Retorna el reporte de los 10 últimos movimientos de la tarjeta.
+     */
+    Flux<Movement> reportLastMovementsDebitCard(String cardNumber);
+
+    /**
+     * Método para obtener el saldo actual de la tarjeta de debito.
+     * @param cardNumber Número de la tarjeta a obtener el saldo actual
+     * @return Retorna el monto actual de la tarjeta en la cuenta principal
+     */
+    Mono<Double> getCurrentBalance(String cardNumber);
 }

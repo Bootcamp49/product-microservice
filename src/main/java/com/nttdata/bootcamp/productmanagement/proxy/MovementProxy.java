@@ -1,6 +1,7 @@
 package com.nttdata.bootcamp.productmanagement.proxy;
 
 import com.nttdata.bootcamp.productmanagement.model.Movement;
+import java.util.List;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -15,4 +16,6 @@ public interface MovementProxy {
     Flux<Movement> reportMovements(String productId, Integer productTypeId);
 
     Flux<Movement> getMovementsByProductId(String productId);
+
+    Flux<Movement> getMovementReportByCard(List<String> productsId, Integer productType);
 }

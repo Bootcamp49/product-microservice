@@ -1,10 +1,12 @@
 package com.nttdata.bootcamp.productmanagement.controller;
 
 import com.nttdata.bootcamp.productmanagement.model.CommissionReportResponse;
+import com.nttdata.bootcamp.productmanagement.model.Movement;
 import com.nttdata.bootcamp.productmanagement.model.MovementReportResponse;
 import com.nttdata.bootcamp.productmanagement.model.ProductPasive;
 import com.nttdata.bootcamp.productmanagement.model.TransferRequest;
 import com.nttdata.bootcamp.productmanagement.service.ProductPasiveService;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -94,13 +96,17 @@ public class ProductPasiveController {
     /**
      * Método para realizar un debito a un producto pasivo según su Id.
      * @param id          Id del producto al cual se le va a realizar el debito
-     * @param debitAmount Monto a debitar del producto
+     * @param requestBody Cuerpo de la solicitud con el monto para debitar y un campo para saber si
+     se usó la tarjeta para el movimiento.
      * @return Retorno del monto actual luego del debito
      */
     @PutMapping("/debit/{id}")
-    public Mono<Double> debitMovement(@PathVariable String id, @RequestBody Double debitAmount, 
-        @RequestBody Boolean isFromDebitCard) {
-        return productPasiveService.debitMovement(id, debitAmount, isFromDebitCard);
+    public Mono<Double> debitMovement(@PathVariable String id, 
+        @RequestBody Map<String, Object> requestBody) {
+        return productPasiveService.debitMovement(id, 
+        (Double) requestBody.get("debitAmount"), 
+        requestBody.get("isFromDebitCard") != null
+            ? (Boolean) requestBody.get("isFromDebitCard") : false);
     }
 
     /**
@@ -112,8 +118,8 @@ public class ProductPasiveController {
     @PutMapping("/deposit/{id}")
     public Mono<Double> depositMovement(
             @PathVariable String id,
-            @RequestBody Double depositAmount) {
-        return productPasiveService.depositMovement(id, depositAmount);
+            @RequestBody Map<String, Double> depositAmount) {
+        return productPasiveService.depositMovement(id, depositAmount.get("depositAmount"));
     }
     
     /**
@@ -154,13 +160,38 @@ public class ProductPasiveController {
     /**
      * Método para asociar tarjetas de debito.
      * @param productId Id del producto a asociar la tarjeta
-     * @param cardNumber Número de la tarjeta a asociar
-     * @param isPrincipalAccount flag para saber si es la cuenta principal
+     * @param requestBody Cuerpo de la solicitud con el número de la tarjeta y un flag
+     para identificar si es la cuenta principal de la tarjeta.
      * @return Retorna el cuerpo del producto al que se le asoció la tarjeta
      */
+    @PutMapping("/debitcard/associate/{productId}")
     public Mono<ProductPasive> associateDebitCard(@PathVariable String productId, 
-        @RequestBody String cardNumber,
-        @RequestBody Boolean isPrincipalAccount) {
-        return productPasiveService.associateDebitCard(productId, cardNumber, isPrincipalAccount);
+        @RequestBody Map<String, Object> requestBody) {
+        return productPasiveService.associateDebitCard(productId, 
+        requestBody.get("cardNumber").toString(), 
+        requestBody.get("isPrincipalAccount") != null 
+            ? (Boolean) requestBody.get("isPrincipalAccount") : false);
     }
+
+    /**
+     * Método para obtener el reporte de los últimos movimientos de la tarjeta pasiva.
+     * @param cardNumber Número de la tarjeta de debito del cual obtener los movimientos
+     * @return Retorna los últimos 10 movimientos de la tarjeta de debito
+     */
+    @GetMapping("/debitcard/movements/{cardNumber}")
+    public Flux<Movement> reportLastMovementsDebitCard(
+        @PathVariable String cardNumber) {
+        return productPasiveService.reportLastMovementsDebitCard(cardNumber);
+    }
+
+    /**
+     * Método para obtener el saldo actual de la tarjeta de debito.
+     * @param cardNumber Número de la tarjeta de debito de la cual obtener el saldo actual
+     * @return Retorna el monto actual de la tarjeta de debito
+     */
+    @GetMapping("/debitcard/current/{cardNumber}")
+    public Mono<Double> currentDebitCardBalance(@PathVariable String cardNumber) {
+        return productPasiveService.getCurrentBalance(cardNumber);
+    }
+    
 }

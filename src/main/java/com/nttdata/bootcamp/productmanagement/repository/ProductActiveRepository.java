@@ -11,4 +11,5 @@ public interface ProductActiveRepository extends ReactiveCrudRepository<ProductA
 
     Flux<ProductActive> findByClientId(String clientId);
     
+    Flux<ProductActive> findByCreditCardNumber(String creditCardNumber);
 }
