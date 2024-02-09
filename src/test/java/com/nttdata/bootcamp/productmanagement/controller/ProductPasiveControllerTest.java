@@ -3,6 +3,7 @@ package com.nttdata.bootcamp.productmanagement.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
@@ -50,14 +51,14 @@ class ProductPasiveControllerTest {
 
     @Test
     void testDebitMovement() {
-        when(productPasiveService.debitMovement(anyString(), anyDouble(), false))
+        when(productPasiveService.debitMovement(anyString(), anyDouble(), anyBoolean()))
             .thenReturn(Mono.just(10.0));
         Map<String, Object> requestBody = new HashMap<String, Object>();
         requestBody.put("debitAmount", 5.0);
         requestBody.put("isFromDebitCard", false);
         Mono<Double> responseController = productPasiveController
             .debitMovement("product5678", requestBody);
-        assertThat(responseController).usingRecursiveComparison().isEqualTo(responseController);
+        assertThat(responseController).usingRecursiveComparison().isEqualTo(Mono.just(10.0));
     }
 
     @Test
@@ -144,6 +145,8 @@ class ProductPasiveControllerTest {
         productPasiveMocked.setCurrentAmount(10.0);
         productPasiveMocked.setMovements(0);
         productPasiveMocked.setCreationDate(LocalDate.parse("2024-01-28"));
+        productPasiveMocked.setAffiliateCardDatetime(null);
+        productPasiveMocked.setIsPrincipalAccount(null);
         productPasiveMocked.setClientId("clientId1234");
 
         return productPasiveMocked;   

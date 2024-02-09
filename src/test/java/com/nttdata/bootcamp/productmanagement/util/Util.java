@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * Clase utilitaria para los tests.
@@ -24,7 +25,8 @@ public class Util {
     @SuppressWarnings("unchecked")
     public <T> T serializeArchive(String jsonFile, Class<?> clase) {
         Gson gson = new GsonBuilder().registerTypeAdapter(LocalDate.class, 
-            new LocalDateTypeAdapter()).create();
+            new LocalDateTypeAdapter())
+            .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeTypeAdapter()).create();
         T response = null;
         String bit;
         String json = "";
