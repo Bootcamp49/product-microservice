@@ -25,7 +25,7 @@ import reactor.core.publisher.Mono;
  * Controlador para los productos pasivos.
  */
 @RestController
-@RequestMapping("/product/pasive")
+@RequestMapping("/pasive")
 public class ProductPasiveController {
 
     @Autowired

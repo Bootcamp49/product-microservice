@@ -24,7 +24,7 @@ import reactor.core.publisher.Mono;
  * Controlador para los productos activos.
  */
 @RestController
-@RequestMapping("/product/active")
+@RequestMapping("/active")
 public class ProductActiveController {
 
     @Autowired
