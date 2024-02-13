@@ -206,7 +206,7 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
     public Flux<Movement> reportLastMovementsDebitCard(String cardNumber) {
         List<String> productsRelated = pasiveRepository
             .findByDebitCardNumber(cardNumber).map(p -> p.getId()).collectList().block();
-        Flux<Movement> lastMovements = movementProxy.getMovementReportByCard(productsRelated, 1);
+        Flux<Movement> lastMovements = movementProxy.getMovementReportByCard(String.join(",", productsRelated), 1);
         return lastMovements;
     }
 

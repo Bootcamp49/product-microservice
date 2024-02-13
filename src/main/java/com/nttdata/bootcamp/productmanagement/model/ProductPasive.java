@@ -39,4 +39,6 @@ public class ProductPasive {
     private LocalDateTime affiliateCardDatetime;
     
     private Boolean isPrincipalAccount;
+
+    private Boolean isYankeeProduct;
 }

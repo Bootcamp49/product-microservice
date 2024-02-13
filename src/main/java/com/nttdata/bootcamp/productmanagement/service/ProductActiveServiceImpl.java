@@ -216,7 +216,7 @@ public class ProductActiveServiceImpl implements ProductActiveService {
         if (productId.size() <= 0) {
             return null;
         }
-        Flux<Movement> lastMovements = movementProxy.getMovementReportByCard(productId, 2);
+        Flux<Movement> lastMovements = movementProxy.getMovementReportByCard(String.join(",", productId), 2);
         return lastMovements;
     }
 }
