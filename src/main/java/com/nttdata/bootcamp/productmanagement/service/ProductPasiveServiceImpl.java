@@ -10,8 +10,11 @@ import com.nttdata.bootcamp.productmanagement.repository.ProductPasiveRepository
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import net.bytebuddy.implementation.bytecode.Throw;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -38,16 +41,19 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
     private final AdditionalValidationService additionalValidationService;
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "multiplePasiveFallback")
     public Flux<ProductPasive> findProducts() {
         return pasiveRepository.findAll();
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "multiplePasiveFallback")
     public Flux<ProductPasive> findByClientId(String clientId) {
         return pasiveRepository.findByClientId(clientId);
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "singlePasiveFallback")
     public Mono<ProductPasive> createProduct(ProductPasive productPasive) {
         if (additionalValidationService.clientHasDebts(productPasive.getClientId())) {
             return null;
@@ -65,6 +71,7 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "singlePasiveFallback")
     public Mono<ProductPasive> updateProduct(@NonNull String id, ProductPasive product) {
         return pasiveRepository.findById(id)
                 .flatMap(existingProduct -> {
@@ -77,11 +84,13 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "singlePasiveFallback")
     public Mono<ProductPasive> findById(@NonNull String id) {
         return pasiveRepository.findById(id);
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "doubleResponses")
     public Mono<Double> debitMovement(@NonNull String id, Double debitAmount, 
         Boolean isFromDebitCard) {
         MovementType movementType = new MovementType();
@@ -115,6 +124,7 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "doubleResponses")
     public Mono<Double> depositMovement(@NonNull String id, Double depositAmount) {
         Movement movementToCreate = new Movement();
         MovementType movementType = new MovementType();
@@ -140,6 +150,7 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "doubleResponses")
     public Mono<Double> transfer(@NonNull String originId,
             Double transferAmount, @NonNull String finalId) {
         
@@ -162,6 +173,7 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
     }
     
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "commissionReportFallback")
     public Mono<CommissionReportResponse> commissionReport(String productId) {
         Flux<Movement> reportResponse = movementProxy.reportCommission(productId, 1);
         Integer commissionMovements = reportResponse.count().block().intValue();
@@ -172,6 +184,7 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "movementReportFallback")
     public Flux<MovementReportResponse> movementReport(String productId) {
         Flux<Movement> reportResponse = movementProxy.reportMovements(productId, 1);
         MovementReportResponse movementResponse = new MovementReportResponse();
@@ -191,6 +204,7 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "singlePasiveFallback")
     public Mono<ProductPasive> associateDebitCard(@NonNull String productId, String cardNumber, 
         Boolean isPrincipalAccount) {
         return pasiveRepository.findById(productId)
@@ -203,6 +217,7 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "movementsFallback")
     public Flux<Movement> reportLastMovementsDebitCard(String cardNumber) {
         List<String> productsRelated = pasiveRepository
             .findByDebitCardNumber(cardNumber).map(p -> p.getId()).collectList().block();
@@ -211,9 +226,34 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "doubleResponses")
     public Mono<Double> getCurrentBalance(String cardNumber) {
         Double currentAmount = pasiveRepository.findByDebitCardNumber(cardNumber)
             .filter(p -> p.getIsPrincipalAccount()).blockFirst().getCurrentAmount();
         return Mono.just(currentAmount);
+    }
+
+    private Mono<ProductPasive> singlePasiveFallback(Throwable throwable){
+        ProductPasive productPasiveToReturn = new ProductPasive();
+        return Mono.just(productPasiveToReturn);
+    }
+    private Flux<ProductPasive> multiplePasiveFallback(Throwable throwable){
+        ProductPasive productPasiveToReturn = new ProductPasive();
+        return Flux.just(productPasiveToReturn);
+    }
+    private Mono<CommissionReportResponse> commissionReportFallback(Throwable throwable){
+        CommissionReportResponse commissionReportToReturn = new CommissionReportResponse();
+        return Mono.just(commissionReportToReturn);
+    }
+    private Flux<MovementReportResponse> movementReportFallback(Throwable throwable){
+        MovementReportResponse movementReportToReturn = new MovementReportResponse();
+        return Flux.just(movementReportToReturn);
+    }
+    private Flux<Movement> movementsFallback(Throwable throwable){
+        Movement movementToReturn = new Movement();
+        return Flux.just(movementToReturn);
+    }
+    private Mono<Double> doubleResponses(Throwable throwable){
+        return Mono.just(0.0);
     }
 }

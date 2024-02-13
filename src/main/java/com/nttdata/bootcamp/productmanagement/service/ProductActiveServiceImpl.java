@@ -9,8 +9,11 @@ import com.nttdata.bootcamp.productmanagement.proxy.MovementProxy;
 import com.nttdata.bootcamp.productmanagement.repository.ProductActiveRepository;
 import java.time.LocalDate;
 import java.util.List;
+
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import net.bytebuddy.implementation.bytecode.Throw;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -37,21 +40,25 @@ public class ProductActiveServiceImpl implements ProductActiveService {
     private final AdditionalValidationService additionalValidationService;
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "multipleProductActiveFallback")
     public Flux<ProductActive> findProducts() {
         return activeRepository.findAll();
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "singleProductActiveFallback")
     public Mono<ProductActive> findById(@NonNull String id) {
         return activeRepository.findById(id);
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "multipleProductActiveFallback")
     public Flux<ProductActive> findByClientId(String clientId) {
         return activeRepository.findByClientId(clientId);
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "singleProductActiveFallback")
     public Mono<ProductActive> createProduct(@NonNull ProductActive productActive) {
         if (additionalValidationService.clientHasDebts(productActive.getClientId())) {
             return null;
@@ -65,6 +72,7 @@ public class ProductActiveServiceImpl implements ProductActiveService {
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "singleProductActiveFallback")
     public Mono<ProductActive> updateProduct(@NonNull String id, ProductActive productActive) {
         return activeRepository.findById(id)
                 .flatMap(existingProduct -> {
@@ -82,6 +90,7 @@ public class ProductActiveServiceImpl implements ProductActiveService {
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "doubleResponses")
     public Mono<Double> consumeCredit(@NonNull String id, Double consumedCredit) { 
         MovementType movementType = new MovementType();
         movementType.setId(3);
@@ -110,6 +119,7 @@ public class ProductActiveServiceImpl implements ProductActiveService {
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "doubleResponses")
     public Mono<Double> payCredit(@NonNull String id, Double depositAmount, 
         String pasiveProductId) {
         MovementType movementType = new MovementType();
@@ -154,6 +164,7 @@ public class ProductActiveServiceImpl implements ProductActiveService {
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "doubleResponses")
     public Mono<Double> transfer(String originId, 
         Double transferAmount, @NonNull String finalProductId) {
         final Mono<Double> originCurrentAmount = consumeCredit(originId, transferAmount);
@@ -180,6 +191,7 @@ public class ProductActiveServiceImpl implements ProductActiveService {
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "commissionReportFallback")
     public Mono<CommissionReportResponse> commissionReport(String productId) {
         Flux<Movement> reportResponse = movementProxy.reportCommission(productId, 2);
         Integer commissionMovements = reportResponse.count().block().intValue();
@@ -190,6 +202,7 @@ public class ProductActiveServiceImpl implements ProductActiveService {
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "movementReportFallback")
     public Flux<MovementReportResponse> movementReport(String productId) {
         Flux<Movement> reportResponse = movementProxy.reportMovements(productId, 2);
         MovementReportResponse movementResponse = new MovementReportResponse();
@@ -209,6 +222,7 @@ public class ProductActiveServiceImpl implements ProductActiveService {
     }
 
     @Override
+    @CircuitBreaker(name = "product", fallbackMethod = "movementFallback")
     public Flux<Movement> reportLastMovementsCreditCard(String cardNumber) {
         List<String> productId = activeRepository
             .findByCreditCardNumber(cardNumber).map(p -> p.getId()).collectList().block();
@@ -218,5 +232,29 @@ public class ProductActiveServiceImpl implements ProductActiveService {
         }
         Flux<Movement> lastMovements = movementProxy.getMovementReportByCard(String.join(",", productId), 2);
         return lastMovements;
+    }
+
+    private Mono<ProductActive> singleProductActiveFallback(Throwable throwable){
+        ProductActive productActiveToReturn = new ProductActive();
+        return Mono.just(productActiveToReturn);
+    }
+    private Flux<ProductActive> multipleProductActiveFallback(Throwable throwable){
+        ProductActive productActive = new ProductActive();
+        return Flux.just(productActive);
+    }
+    private Mono<Double> doubleResponses(Throwable throwable){
+        return Mono.just(0.0);
+    }
+    private Mono<CommissionReportResponse> commissionReportFallback(Throwable throwable){
+        CommissionReportResponse commissionReport = new CommissionReportResponse();
+        return Mono.just(commissionReport);
+    }
+    private Flux<MovementReportResponse> movementReportFallback(Throwable throwable){
+        MovementReportResponse movementReport = new MovementReportResponse();
+        return Flux.just(movementReport);
+    }
+    private Flux<Movement> movementFallback(Throwable throwable){
+        Movement movement = new Movement();
+        return Flux.just(movement);
     }
 }
