@@ -17,20 +17,14 @@ import reactor.core.publisher.Mono;
 /**
  * Interfaz para los metodos de movimientos.
  */
-@FeignClient(name="movement-service")
 public interface MovementProxy {
-    @PostMapping()
     Mono<Movement> createMovement(Movement movement);
 
-    @GetMapping("/report/commission/{productId}")
     Flux<Movement> reportCommission(@PathVariable String productId, @SpringQueryMap Integer productTypeId);
 
-    @GetMapping("/report/{productId}")
     Flux<Movement> reportMovements(@PathVariable String productId, @SpringQueryMap Integer productTypeId);
 
-    @GetMapping("/product/{productId}")
     Flux<Movement> getMovementsByProductId(@PathVariable String productId);
 
-    @GetMapping("/report/card")
     Flux<Movement> getMovementReportByCard(@SpringQueryMap String productsId, @SpringQueryMap Integer productType);
 }

@@ -205,19 +205,18 @@ public class ProductActiveServiceImpl implements ProductActiveService {
     @CircuitBreaker(name = "product", fallbackMethod = "movementReportFallback")
     public Flux<MovementReportResponse> movementReport(String productId) {
         Flux<Movement> reportResponse = movementProxy.reportMovements(productId, 2);
-        MovementReportResponse movementResponse = new MovementReportResponse();
-        Flux<MovementReportResponse> reportToReturn = reportResponse
-            .groupBy(m -> m.getMovementDate().toLocalDate())
-            .flatMap(grouped -> grouped
-                .map(movementGrouped -> movementGrouped.getAmountMoved())
-                .reduce(0.0, (a, b) -> {
-                    return a + b;
-                })
-                .map(totalAmountMovemed -> {
-                    movementResponse.setDay(grouped.key());
-                    movementResponse.setDayAmount(totalAmountMovemed);
-                    return movementResponse;
-                }));
+
+        Flux<MovementReportResponse> reportToReturn = reportResponse.groupBy(m -> m.getMovementDate().toLocalDate())
+                .flatMap(grouped -> grouped
+                        .map(movementGrouped -> movementGrouped.getAmountMoved())
+                        .reduce((a,b) -> {
+                            return a+b;
+                        }).map(totalAmountMoved -> {
+                            MovementReportResponse movementResponse = new MovementReportResponse();
+                            movementResponse.setDay(grouped.key());
+                            movementResponse.setDayAmount(totalAmountMoved);
+                            return movementResponse;
+                        }));
         return reportToReturn;
     }
 
@@ -243,6 +242,8 @@ public class ProductActiveServiceImpl implements ProductActiveService {
         return Flux.just(productActive);
     }
     private Mono<Double> doubleResponses(Throwable throwable){
+        System.out.println("Dentro del fallback");
+        System.out.println("Throwable: " + throwable.getMessage());
         return Mono.just(0.0);
     }
     private Mono<CommissionReportResponse> commissionReportFallback(Throwable throwable){
@@ -254,6 +255,8 @@ public class ProductActiveServiceImpl implements ProductActiveService {
         return Flux.just(movementReport);
     }
     private Flux<Movement> movementFallback(Throwable throwable){
+        System.out.println("Dentro del fallback");
+        System.out.println("Throwable: " + throwable);
         Movement movement = new Movement();
         return Flux.just(movement);
     }

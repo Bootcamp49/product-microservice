@@ -5,6 +5,7 @@ import com.nttdata.bootcamp.productmanagement.model.Movement;
 import com.nttdata.bootcamp.productmanagement.model.MovementReportResponse;
 import com.nttdata.bootcamp.productmanagement.model.MovementType;
 import com.nttdata.bootcamp.productmanagement.model.ProductPasive;
+import com.nttdata.bootcamp.productmanagement.proxy.ClientProxy;
 import com.nttdata.bootcamp.productmanagement.proxy.MovementProxy;
 import com.nttdata.bootcamp.productmanagement.repository.ProductPasiveRepository;
 import java.time.LocalDate;
@@ -14,7 +15,6 @@ import java.util.List;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import net.bytebuddy.implementation.bytecode.Throw;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -33,9 +33,14 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
     @Autowired
     private final MovementProxy movementProxy;
 
-    private Integer maxMovements = 20;
+    @Autowired
+    private final ClientProxy clientProxy;
 
-    private Double commissionAmount = 5.0;
+    final private Integer maxMovements = 20;
+
+    final private Double commissionAmount = 5.0;
+
+    final private Integer maxMonthMovements = 10;
 
     @Autowired
     private final AdditionalValidationService additionalValidationService;
@@ -58,6 +63,25 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
         if (additionalValidationService.clientHasDebts(productPasive.getClientId())) {
             return null;
         }
+        String clientType = clientProxy.getClientById(productPasive.getClientId()).getClientType();
+        boolean notValidToCreate;
+        if(clientType.equalsIgnoreCase("Personal")){
+            Flux<ProductPasive> otherPasiveProducts = pasiveRepository.findByClientId(productPasive.getClientId());
+            if(productPasive.getType().getId() == 1 || productPasive.getType().getId() == 2) {
+                notValidToCreate = otherPasiveProducts.count().block().intValue() > 0;
+            } else {
+                notValidToCreate = otherPasiveProducts.count().block().intValue() > 0 &&
+                        otherPasiveProducts.filter(p -> p.getType().getId() == 1 || p.getType().getId() == 2)
+                                .count().block().intValue() > 0;
+            }
+            if (notValidToCreate)
+                return null;
+        } else if(clientType.equalsIgnoreCase("Empresarial")){
+            notValidToCreate = productPasive.getType().getId().equals(1) || productPasive.getType().getId().equals(3);
+            if(notValidToCreate)
+                return null;
+        }
+
         productPasive.setCreationDate(LocalDate.now());
         productPasive.setMovements(0);
         productPasive.setCurrentAmount(
@@ -98,6 +122,11 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
         movementType.setDescription("Debito");
         Movement movementToCreate = new Movement();
         ProductPasive productToDebit = pasiveRepository.findById(id).block();
+        if((productToDebit.getType().getId() == 1 && productToDebit.getMovements() > maxMonthMovements) ||
+            productToDebit.getType().getId() == 3 && productToDebit.getMovements() >= 1)
+            return null;
+
+
         if (isFromDebitCard) {
             if (productToDebit.getCurrentAmount() < debitAmount) {
                 productToDebit = additionalValidationService.productToMakeDebitPay(id, debitAmount);
@@ -113,11 +142,12 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
         movementToCreate.setProductId(id);
         movementToCreate.setIsFromDebitCard(isFromDebitCard);
         movementToCreate.setType(movementType);
-        movementProxy.createMovement(movementToCreate).block();
+        movementProxy.createMovement(movementToCreate);
 
         productToDebit.setCurrentAmount(
             productToDebit.getCurrentAmount() - (debitAmount
-            + (productToDebit.getMovements() > maxMovements ? commissionAmount : 0.0)));
+            + (productToDebit.getType().getId() == 3 ?
+                    (productToDebit.getMovements() > maxMovements ? commissionAmount : 0.0) : 0.0)));
         productToDebit.setMovements(productToDebit.getMovements() + 1);
         
         return pasiveRepository.save(productToDebit).map(ProductPasive::getCurrentAmount);
@@ -133,17 +163,22 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
 
         ProductPasive existingProduct = pasiveRepository.findById(id).block();
 
+        if((existingProduct.getType().getId() == 1 && existingProduct.getMovements() > maxMonthMovements) ||
+            existingProduct.getType().getId() == 3 && existingProduct.getMovements() >= 1)
+            return null;
+
         movementToCreate.setClientId(existingProduct.getClientId());
         movementToCreate.setAmountMoved(depositAmount);
         movementToCreate.setHasCommission(
                 existingProduct.getMovements() > maxMovements);
         movementToCreate.setProductId(id);
         movementToCreate.setType(movementType);
-        movementProxy.createMovement(movementToCreate).block();
+        movementProxy.createMovement(movementToCreate);
 
         existingProduct.setCurrentAmount(existingProduct.getCurrentAmount() 
             + (depositAmount
-            - (existingProduct.getMovements() > maxMovements ? commissionAmount : 0.0)));
+            - (existingProduct.getType().getId() == 3 ?
+                (existingProduct.getMovements() > maxMovements ? commissionAmount : 0.0) : 0.0)));
         existingProduct.setMovements(existingProduct.getMovements() + 1);
         return pasiveRepository.save(existingProduct)
                 .map(ProductPasive::getCurrentAmount);
@@ -155,6 +190,9 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
             Double transferAmount, @NonNull String finalId) {
         
         final Mono<Double> originCurrentAmount = debitMovement(originId, transferAmount, false);
+        if(originCurrentAmount == null){
+            return null;
+        }
         final Movement movementToCreate = new Movement();
         MovementType movementType = new MovementType();
         movementType.setId(5);
@@ -168,7 +206,7 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
         movementToCreate.setProductId(finalId);
         movementToCreate.setType(movementType);
         movementToCreate.setProductOriginId(originId);
-        movementProxy.createMovement(movementToCreate).block();
+        movementProxy.createMovement(movementToCreate);
         return originCurrentAmount;
     }
     
@@ -191,7 +229,7 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
         Flux<MovementReportResponse> reportToReturn = reportResponse
             .groupBy(m -> m.getMovementDate().toLocalDate())
             .flatMap(grouped -> grouped
-                .map(movementGrouped -> movementGrouped.getAmountMoved())
+                .map(Movement::getAmountMoved)
                 .reduce(0.0, (a, b) -> {
                     return a + b;
                 })
@@ -220,7 +258,7 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
     @CircuitBreaker(name = "product", fallbackMethod = "movementsFallback")
     public Flux<Movement> reportLastMovementsDebitCard(String cardNumber) {
         List<String> productsRelated = pasiveRepository
-            .findByDebitCardNumber(cardNumber).map(p -> p.getId()).collectList().block();
+            .findByDebitCardNumber(cardNumber).map(ProductPasive::getId).collectList().block();
         Flux<Movement> lastMovements = movementProxy.getMovementReportByCard(String.join(",", productsRelated), 1);
         return lastMovements;
     }
@@ -234,6 +272,8 @@ public class ProductPasiveServiceImpl implements ProductPasiveService {
     }
 
     private Mono<ProductPasive> singlePasiveFallback(Throwable throwable){
+        System.out.print("Dentro del fallback");
+        System.out.println("Throwable: " + throwable.getMessage());
         ProductPasive productPasiveToReturn = new ProductPasive();
         return Mono.just(productPasiveToReturn);
     }
